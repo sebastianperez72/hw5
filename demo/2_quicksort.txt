@@ -1,0 +1,5 @@
+# ===== Ejemplo 2: quicksort recursivo sobre {6,4,3,2,1,8,9} en 0x1000 =====
+memw 0x1000 7
+run
+memw 0x1000 7
+exit

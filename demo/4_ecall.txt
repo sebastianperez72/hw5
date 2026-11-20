@@ -1,0 +1,4 @@
+# ===== Ejemplo 4: ecall y desensamblador =====
+disasm 0 12
+run
+exit

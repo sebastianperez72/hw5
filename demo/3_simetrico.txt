@@ -1,0 +1,5 @@
+# ===== Ejemplo 3: árbol simétrico {6,4,4,1,2,2,1} en 0x1000 =====
+run
+memw 0x1000 7
+regs a0
+exit

@@ -1,0 +1,10 @@
+# ===== Ejemplo 1: riscvtest (add, sub, and, or, slt, lw, sw, beq, jal) =====
+# Si todo sale bien, escribe 25 en la dirección 100.
+pc
+step
+step
+step
+regs sp gp t2
+run
+mem 100 103
+exit

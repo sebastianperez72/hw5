@@ -8,6 +8,7 @@
 
 #include <cctype>
 #include <cstdio>
+#include <fstream>
 #include <iostream>
 #include <set>
 #include <sstream>
@@ -324,17 +325,23 @@ bool handle(Sim& sim, const std::string& line) {
 
 int main(int argc, char** argv) {
     Sim sim;
-    bool run_mode = false;
+    bool run_mode = false, pause = false;
+    std::string script;
     uint64_t max = DEFAULT_RUN_LIMIT;
 
     for (int i = 1; i < argc; i++) {
         std::string a = argv[i];
         if (a == "--run" || a == "-r") run_mode = true;
         else if ((a == "--max" || a == "-m") && i + 1 < argc) max = std::stoull(argv[++i], nullptr, 0);
+        else if ((a == "--script" || a == "-s") && i + 1 < argc) script = argv[++i];
+        else if (a == "--pause" || a == "-p") pause = true;
         else if (a == "--help" || a == "-h") {
-            std::printf("Uso: %s [--run] [--max N] programa.bin|programa.elf\n"
-                        "  --run    ejecuta el programa completo y muestra los registros\n"
-                        "  --max N  límite de instrucciones para run (por defecto %llu)\n",
+            std::printf("Uso: %s [--run] [--max N] [--script archivo [--pause]] programa.bin|programa.elf\n"
+                        "  --run       ejecuta el programa completo y muestra los registros\n"
+                        "  --max N     límite de instrucciones para run (por defecto %llu)\n"
+                        "  --script F  ejecuta los comandos del archivo F (una línea por comando;\n"
+                        "              las líneas con # se muestran como comentario)\n"
+                        "  --pause     con --script, espera Enter antes de cada comando\n",
                         argv[0], (unsigned long long)DEFAULT_RUN_LIMIT);
             return 0;
         } else sim.path = a;
@@ -351,8 +358,44 @@ int main(int argc, char** argv) {
         return sim.cpu.exit_code;
     }
 
-    std::printf("Escribe \"help\" para ver los comandos.\n");
     std::string line;
+    if (!script.empty()) {
+        // Modo demo: los comandos salen del archivo y se muestran como si se
+        // hubieran escrito. Con --pause se espera Enter antes de cada uno.
+        std::ifstream f(script);
+        if (!f) {
+            std::printf("No se pudo abrir el script \"%s\".\n", script.c_str());
+            return 1;
+        }
+        bool prev_comment = false;
+        while (std::getline(f, line)) {
+            if (!line.empty() && line.back() == '\r') line.pop_back();
+            if (line.empty()) continue;
+            if (line[0] == '#') {
+                std::printf(prev_comment ? "%s\n" : "\n%s\n", line.c_str());
+                prev_comment = true;
+                continue;
+            }
+            prev_comment = false;
+            // Se muestra el comando; con --pause se ejecuta al presionar Enter
+            // (el Enter del usuario completa la línea).
+            std::printf("> %s", line.c_str());
+            std::fflush(stdout);
+            std::string dummy;
+            if (!pause || !std::getline(std::cin, dummy)) std::printf("\n");
+            try {
+                if (!handle(sim, line)) {
+                    std::printf("See you next time...\nProgram exited with code %d.\n",
+                                sim.cpu.exit_code);
+                    return 0;
+                }
+            } catch (const std::exception& e) {
+                std::printf("Error: %s\n", e.what());
+            }
+        }
+    }
+
+    std::printf("Escribe \"help\" para ver los comandos.\n");
     while (true) {
         std::printf("> ");
         std::fflush(stdout);

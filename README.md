@@ -69,6 +69,19 @@ Program exited with code 0.
 
 Los números aceptan decimal (`100`) o hexadecimal (`0x64`).
 
+### Modo demo
+
+`--script archivo` ejecuta los comandos de un archivo de texto (uno por línea;
+las líneas con `#` se muestran como comentario). Con `--pause` muestra cada
+comando y lo ejecuta al presionar Enter, útil para presentar:
+
+```sh
+./build/rv32sim tests/bin/riscvtest.bin --script demo/1_riscvtest.txt --pause
+```
+
+En Windows, `demo\demo.bat` compila el simulador y corre los cuatro ejemplos
+seguidos.
+
 ## Diseño
 
 ```
